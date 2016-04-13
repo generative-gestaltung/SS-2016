@@ -13,24 +13,100 @@
  		var frameCount = 0;
 		var PI = 3.14159;
 
+        var RANDOM_TABLE = [];
+        var N_RANDOM = 1000;
+
+        var init_random = function() {
+            for (var i=0; i<N_RANDOM; i++) {
+                RANDOM_TABLE[i] = Math.random();
+            }
+        }
+    
+        var noise0 = function(phase) {
+            phase = Math.round(phase) % N_RANDOM;
+            return RANDOM_TABLE[phase];
+        }
+    
+        // sin function return values from 0...1
+        var sin = function (phase) {
+            return Math.sin(phase)*0.5+0.5;
+        }
+    
+        // saw function return values 0 ... 1
+        var saw = function (phase) {
+            return phase % (2*PI) / 2 / PI;
+        }
+    
+    
+        // return 0 if lower than threshold
+        var compare = function(x, thresh) {
+            if (x<thresh) return 0;
+            return 1;
+        }
+    
+    
+        // quantize signal in n steps, expects input signal of range 0...1
+        var quantize = function (x, n) {
+            if (n==0) return 0;
+            return Math.floor(x*n)/n;
+        }
+    
+        var constrain = function (x, min, max) {
+            if (x>max) return max;
+            if (x<min) return min;
+            return x;
+        }
+    
+    
+        // blend linear between x0 and x1. t should be in range 0...1
+        var blend = function (x0, x1, t) {
+            
+            if (t>1) return x1;
+            if (t<0) return x0;
+            return x1*t + x0*(1-t);
+        }
+    
+    
 		var draw = function() {
 
 
-            context.fillStyle   = "rgba(255,255,255,1.0)";
+            context.fillStyle   = "rgba(255,255,255,0.02)";
             context.fillRect(0, 0, canvas.width, canvas.height);
 
-
-			x = frameCount % 200;
-			y = 0;
-           
-
+            var LEN = 400;
+            
+			x = frameCount % LEN;
+            var A = 60.0;
+            
+            
+            
+            //y = A * (Math.sin(w*frameCount)*0.5+0.5);
+            
+            
+            
+            var w = 2*PI * 4 / LEN;
+            
+            y0 = A*saw(x*w);
 			context.fillStyle = "#000000";
-		   	context.fillRect (x, y, 4, 4);
+		   	context.fillRect (x, y0, 4, 4);
+            
+            
+            y1 = A*sin(x*w);
+            context.fillRect (x, y1+80, 4, 4);
+            
+            context.fillStyle = "#ff0000";
+            
+            var t = Math.sin(frameCount*0.02)*0.5+0.5;
+            y2 = blend(y0, y1, t);
+            context.fillRect (x, y2+160, 4, 4);
+            
+            
         	frameCount = frameCount+1;
         	requestAnimationFrame(draw);
       	};
 
 		// start the loop
+        init_random();
       	draw();
 
 

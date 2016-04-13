@@ -1,0 +1,91 @@
+<!DOCTYPE HTML>
+<html>
+
+
+  <body>
+    <canvas id="myCanvas" width="1000" height="600"></canvas>
+
+    <script>
+
+		// get the context
+		var canvas = document.getElementById("myCanvas");
+		var context = canvas.getContext('2d');
+
+
+    var N = 1000;
+
+    var squares = [];
+
+
+ 		var frameCount = 0;
+    
+    var quantize = function (x, n) {
+      if (n==0) return 0;
+      return Math.floor(x*n)/n;
+    }
+
+
+    var init = function () {
+
+      for (var i=0; i<N; i++) {
+
+        var newSquare = {};
+
+        newSquare.x = Math.random()*canvas.width;
+        newSquare.y = Math.random()*canvas.height;
+        newSquare.angle_speed = (Math.random()-0.5) / 100;
+        newSquare.size_max = Math.random()*40 + 10;
+        newSquare.size_freq = Math.random()*0.02;
+        newSquare.cl = Math.floor(Math.random()*2.9999);
+
+        var r = Math.round(quantize(Math.random(), 5)*255);
+        var g = Math.round(quantize(Math.random(), 2)*255);
+        var b = Math.round(quantize(Math.random(), 1)*255);
+        newSquare.color = "rgba("+r+","+g+","+b+", 0.9)";
+
+        squares[i] = newSquare;
+      }
+    }
+
+		var draw = function() {
+
+			context.fillStyle   = "rgba(255,255,255,1.0)";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+			
+
+      for (var i=0; i<N; i++) {
+
+        sq = squares[i];
+        var size = Math.sin (frameCount*2*Math.PI*sq.size_freq)*sq.size_max;
+        var phi  = frameCount*2*Math.PI*sq.angle_speed;
+
+        context.fillStyle = sq.color;
+        
+        context.save();
+        context.translate (sq.x, sq.y);
+        if (sq.cl==0) 
+          context.translate(Math.sin(frameCount*0.1)*140,0);
+
+        if (sq.cl==1) 
+          context.translate(0, Math.sin(frameCount*0.1)*140);
+
+        context.rotate(phi);
+        context.translate(-size/2, -size/2);
+        
+        context.fillRect(0, 0, size, size);
+        context.restore();
+      }
+
+      frameCount = frameCount+1;
+      requestAnimationFrame(draw);
+    };
+
+    init();
+    draw();
+
+
+    </script>
+
+  </body>
+
+</html>      
