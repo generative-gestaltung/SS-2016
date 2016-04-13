@@ -1,0 +1,80 @@
+<!DOCTYPE HTML>
+<html>
+
+
+  <body>
+    <canvas id="myCanvas" width="1000" height="1000"></canvas>
+
+    <script>
+
+		// get the context
+		var canvas = document.getElementById("myCanvas");
+		var context = canvas.getContext('2d');
+
+ 		var frameCount = 0;
+
+		var N = 5000;
+		var size = Math.random()*20; 
+		var speed = Math.random()*0.1;
+        var positions = [];
+		var sizes     = [];
+		var speeds    = [];
+		var classes   = [];
+
+		var w = 1000;
+		var h = 720;
+		for (var i=0; i<N; i++) {
+			var x0 = Math.random()*w;
+			var y0 = Math.random()*h;
+			positions[i] = {x:x0, y:y0};
+			sizes[i] = Math.random()*40;
+			speeds[i] = Math.random()*0.1-0.05;
+			classes[i] = Math.floor(Math.random()*2.9999);
+		}
+
+		var draw = function() {
+
+
+            context.fillStyle   = "rgba(255,255,255,1.0)";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+           
+
+
+			for (var i=0; i<N; i++) {
+				
+				var size = sizes[i]*Math.sin(frameCount*speeds[N-1-i]);
+            	context.save();
+		   		context.translate(positions[i].x, positions[i].y);
+            	context.rotate(frameCount*speeds[i]);
+            
+            	context.translate (-size/2, -size/2);
+				var x = positions[i].x; // * Math.sin(frameCount*speeds[i]*0.1)*400;
+				var y = positions[i].y; // * Math.sin(frameCount*0.01)*400;
+		   
+	
+				if (classes[i] == 1)	   		
+            		context.fillStyle   = "rgba(200,50,50, 0.7)";
+            	else if (classes[i] == 2)
+					context.fillStyle   = "rgba(50,200,130, 0.7)";
+				else
+					context.fillStyle   = "rgba(250,250,0, 0.7)";
+
+				context.fillRect(0, 0, size, size);
+            	context.restore();
+			}
+
+			// count the frame and loop the animation
+        	frameCount = frameCount+1;
+        	requestAnimationFrame(draw);
+      	};
+
+		// start the loop
+      	draw();
+
+
+    </script>
+
+  </body>
+
+</html>      

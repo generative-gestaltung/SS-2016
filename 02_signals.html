@@ -1,0 +1,41 @@
+<!DOCTYPE HTML>
+<html>
+
+
+  <body>
+    <canvas id="myCanvas" width="1000" height="1000"></canvas>
+
+    <script>
+
+		// get the context
+		var canvas = document.getElementById("myCanvas");
+		var context = canvas.getContext('2d');
+ 		var frameCount = 0;
+		var PI = 3.14159;
+
+		var draw = function() {
+
+
+            context.fillStyle   = "rgba(255,255,255,1.0)";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+
+			x = frameCount % 200;
+			y = 0;
+           
+
+			context.fillStyle = "#000000";
+		   	context.fillRect (x, y, 4, 4);
+        	frameCount = frameCount+1;
+        	requestAnimationFrame(draw);
+      	};
+
+		// start the loop
+      	draw();
+
+
+    </script>
+
+  </body>
+
+</html>      
