@@ -1,0 +1,167 @@
+<!DOCTYPE HTML>
+<html>
+
+
+  <body>
+    <canvas id="myCanvas" width="1200" height="700"></canvas>
+
+    <script>
+
+        var quantize = function (x, n) {
+            if (n==0) return 0;
+            return Math.floor(x*n)/n;
+        }
+
+		// get the context
+		var canvas = document.getElementById("myCanvas");
+		var context = canvas.getContext('2d');
+
+
+ 		var frameCount = 0;
+        var N = 5000;
+        
+        
+        // arrays to store particle data
+        var positions = [];
+        var velocities = [];
+        var infos = [];
+        var targets = [];
+
+        // forces
+        var gravity = {x:0, y:0.1};
+
+
+        function respawnParticle (index) {
+            // reinit position & velocity
+            positions[index] = {x:Math.random()*canvas.width, y:Math.random()*(-10)};
+            velocities[index] = {x:0, y:0};
+
+            var w = Math.random()*0.9+0.1;
+            p = [];
+            var N = Math.round(Math.random()*3+3);
+            for (var j=0; j<N; j++) {
+                var phi = 2*Math.PI / N * j;
+                var R = w*10;
+                var x0 = (Math.random()*2-1)*R/2;
+                var y0 = (Math.random()*2-1)*R/2;
+                p[j] = {x:R*Math.cos(phi)+x0, y:R*Math.sin(phi)+y0};
+            }
+
+            infos[index] = {lifeTime:Math.random()*50+100,
+                            weight: w,
+                            points: p,
+                            len: N};
+
+            targets[index] = {x:quantize(Math.random()*canvas.width, 4), y:quantize(Math.random()*canvas.height, 4)};
+
+        }
+    
+    
+        function initParticles() {
+            for (var i=0; i<N; i++) {
+                respawnParticle(i);
+            }
+        }
+    
+    
+        function updateParticles()
+        {
+            
+            for (var i=0; i<N; i++) {
+                
+                // UPDATE VELOCITIES: add all forces on current velocity
+                velocities[i].x += gravity.x;
+                velocities[i].y += gravity.y*infos[i].weight;
+
+
+                var wind = {x: Math.random()*0.2-0.1, y: Math.random()*0.2-0.1};
+
+                var windStrength = Math.sin(frameCount*0.01);
+                velocities[i].x += wind.x*windStrength / infos[i].weight;
+                velocities[i].y += wind.y*windStrength / infos[i].weight;
+
+
+                var damping = 0.99;
+                velocities[i].x *= damping;
+                velocities[i].y *= damping;
+
+                var dX = positions[i].x - targets[i].x;
+                var dY = positions[i].y - targets[i].y;
+
+                velocities[i].x -= dX*0.001;
+                velocities[i].y -= dY*0.001;
+
+                
+                // UPDATE POSITIONS: in each timestep add velocity on current position
+                positions[i].x += velocities[i].x;
+                positions[i].y += velocities[i].y;
+
+
+                
+                infos[i].lifeTime--;
+
+                // if we are out of bounds, kill and respawn particle
+                //if (positions[i].y > canvas.height) {
+                if (infos[i].lifeTime<0) {
+                    // respawn with certain prob
+                    if (Math.random()<1.0) {
+                        respawnParticle(i);
+                    }
+                }
+            }
+            
+        }
+    
+        function drawParticles()
+        {
+            for (var i=0; i<N; i++) {
+                context.save();
+                context.translate(positions[i].x, positions[i].y);
+                context.beginPath();
+                
+                var R = Math.ceil(infos[i].weight*5);
+
+                //context.arc(0,0,R,0,Math.PI*2);
+                var points = infos[i].points;
+                var len = infos[i].len;
+                context.moveTo(points[0].x, points[0].y);
+                for (var j=1; j<len; j++) {
+                   context.lineTo(points[j].x, points[j].y); 
+                }
+                //context.lineTo(points[0].x, points[0].y); 
+
+                a = infos[i].lifeTime/150;
+                b = Math.round(infos[i].lifeTime/100*255);
+                context.fillStyle = "rgb("+b+","+b+","+b+")";
+                context.fill();
+                
+                context.restore();
+            }
+        }
+    
+    
+		var draw = function() {
+
+
+            context.fillStyle   = "#000000";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            updateParticles();
+            drawParticles();
+            
+        	frameCount = frameCount+1;
+        	requestAnimationFrame(draw);
+      	};
+
+
+        initParticles();
+        
+        // start loop
+      	draw();
+
+
+    </script>
+
+  </body>
+
+</html>      
