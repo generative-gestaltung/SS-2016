@@ -1,0 +1,58 @@
+<!DOCTYPE HTML>
+<html>
+
+
+  <body>
+    <canvas id="myCanvas" width="1000" height="1000"></canvas>
+    <script type="text/javascript" src="perlin.js"></script>
+    <script>
+
+		// get the context
+		var canvas = document.getElementById("myCanvas");
+		var context = canvas.getContext('2d');
+ 		var frameCount = 0;
+
+        
+
+        var LEN = 1000;
+        var STEP = 50;
+        var x = 0;
+
+		var draw = function() {
+
+
+            context.fillStyle   = "rgba(255,255,255,0.02)";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            
+            for (var i=0; i<STEP; i++) {
+
+
+    			x = (x+1)%LEN;
+                var A = 60.0;
+                
+                y0 = A*noise.simplex3 (x*0.005,frameCount*0.001, 0);
+
+                y1 = A*noise.simplex3 (x*0.005+10,frameCount*0.001, 0);
+
+    			context.fillStyle = "#000000";
+    		   	context.fillRect (x, y0+A, 2, 2);
+                
+                context.fillRect (x, y1+3*A, 2, 2);
+                
+
+        	}
+
+
+            frameCount = frameCount+1;
+            requestAnimationFrame(draw);
+      	};
+
+      	draw();
+
+
+    </script>
+
+  </body>
+
+</html>      

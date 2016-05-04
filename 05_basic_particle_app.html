@@ -1,0 +1,54 @@
+<!DOCTYPE HTML>
+<html>
+
+  <body>
+    <canvas id="myCanvas" width="1000" height="1000"></canvas>
+    <script type="text/javascript" src="perlin.js"></script>
+    <script type="text/javascript" src="gg_utils.js"></script>
+    <script type="text/javascript" src="particle.js"></script>
+    <script>
+
+	// get the context
+	var canvas = document.getElementById("myCanvas");
+	var context = canvas.getContext('2d');
+ 	var frameCount = 0;
+
+    var N = 100;
+    var particles = []; 
+    var forces = [{x:0, y:0.1}];
+
+    var init = function() {
+        for (var i=0; i<N; i++) {
+            particles[i] = new Particle(Util.rand(0,100), Util.rand(0,100), 50);
+        }
+    }
+
+    function checkBounds (i) {
+        if (particles[i].pos.y > canvas.height) {
+            particles[i] = new Particle(Util.rand(0,100), Util.rand(0,100), 50);
+        }
+    }
+    
+    var draw = function() {
+    
+
+        context.fillStyle   = "rgba(0,0,0,1)";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        for (var i=0; i<N; i++) {
+
+            checkBounds(i);
+            particles[i].update(forces);
+            particles[i].draw(context);
+        }
+
+        frameCount = frameCount+1;
+        requestAnimationFrame(draw);
+    };
+
+    init();
+    draw();
+
+    </script>
+  </body>
+</html>      

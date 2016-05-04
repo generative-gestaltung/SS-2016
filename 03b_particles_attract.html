@@ -1,0 +1,198 @@
+<!DOCTYPE HTML>
+<html>
+
+
+  <body>
+    <canvas id="myCanvas" width="1200" height="800"></canvas>
+
+    <script>
+
+		// get the context
+		var canvas = document.getElementById("myCanvas");
+		var context = canvas.getContext('2d');
+
+
+ 		var frameCount = 0;
+        var N = 10000;
+        
+        var N_ATTRACTORS = 20;
+        var attractors = [];
+
+        
+        
+        // arrays to store particle data
+        var positions = [];
+        var velocities = [];
+        var infos = [];
+
+
+        var quantize = function (x, n) {
+            if (n==0) return 0;
+            return Math.floor(x*n)/n;
+        }
+    
+    
+        function respawnParticle (index) {
+            // reinit position & velocity
+            var x0 = quantize (Math.random(),62)*canvas.width;
+            var y0 = quantize (Math.random(),62)*canvas.height;
+            positions[index] = {x:x0, y:y0};
+            velocities[index] = {x:0, y:0};
+            infos[index] = {lifeTime:Math.random()*200+4000};
+        }
+    
+    function sign (x) {
+        if (x<0) return -1;
+        else return 1;
+    }
+    
+        function init() {
+            
+            for (var i=0; i<N; i++) {
+                respawnParticle(i);
+            }
+            
+            // random positions for attractors
+            for (var i=0; i<N_ATTRACTORS; i++) {
+                
+                var S = Math.random()*20+2;
+                attractors[i] = {x:Math.random()*canvas.width,
+                                 y:Math.random()*canvas.height,
+                                 s:S*sign(Math.random()-0.5)};
+            }
+
+            context.fillStyle   = "rgba(0,0,0,1.0)"
+            context.fillRect(0, 0, canvas.width, canvas.height);
+        }
+    
+    
+        function getDistance (p0, p1) {
+            var dir = { x: p0.x - p1.x,
+                        y: p0.y - p1.y};
+            return Math.sqrt(dir.x*dir.x + dir.y*dir.y);
+        }
+    
+        function getAttraction (particlePos, attractorPos) {
+            
+            // calc direction vector
+            var dir = {x:0, y:0};
+            dir.x = attractorPos.x - particlePos.x;
+            dir.y = attractorPos.y - particlePos.y;
+        
+            // calc length aka distance
+            var dist = Math.sqrt(dir.x*dir.x + dir.y*dir.y);
+            
+            if (dist<1)
+                dist = 1;
+            // normalize vector
+            dir.x = dir.x / dist;
+            dir.y = dir.y / dist;
+            
+            // make force dependent on distance
+            dir.x = dir.x / (dist * dist);
+            dir.y = dir.y / (dist * dist);
+            
+            return dir;
+        }
+    
+    
+        function updateParticles()
+        {
+            
+
+/*
+            attractors[0].x = 200*Math.sin(frameCount*0.02) + 500;
+            attractors[0].y = 200*Math.cos(frameCount*0.02) + 300;
+            
+            attractors[1].x = 250*Math.sin(frameCount*0.005) + 500;
+            attractors[1].y = 100*Math.cos(frameCount*0.006) + 300;
+            
+            attractors[0].S = -10;
+            attractors[1].S = 10;
+*/
+            for (var i=0; i<N; i++) {
+                
+                
+                for (var j=0; j<N_ATTRACTORS; j++) {
+                    var attractionForce = getAttraction (positions[i], attractors[j]);
+                    velocities[i].x += (attractionForce.x*attractors[j].s);
+                    velocities[i].y += (attractionForce.y*attractors[j].s);
+                }
+                
+                var damping = 0.99;
+                velocities[i].x *= damping;
+                velocities[i].y *= damping;
+
+                
+                // UPDATE POSITIONS: in each timestep add velocity on current position
+                positions[i].x += velocities[i].x;
+                positions[i].y += velocities[i].y;
+
+                infos[i].lifeTime--;
+
+                // kill particle if close to attractor
+                
+                var minD = 2;
+                for (var j=0; j<N_ATTRACTORS; j++) {
+                    if (getDistance(positions[i], attractors[j])<minD || infos[i].lifeTime<=0) {
+                        respawnParticle(i);
+                    }
+                }
+            }
+        }
+    
+        function drawParticles()
+        {
+            for (var i=0; i<N; i++) {
+                context.save();
+                context.translate(positions[i].x, positions[i].y);
+                
+                a = infos[i].lifeTime/150;
+                b = 255; //Math.round(infos[i].lifeTime/100*255);
+
+                context.fillStyle = "rgb("+b+","+b+","+b+")";
+                size = 2; //infos[i].lifeTime / 40;
+                context.fillRect (0, 0, size, size);
+                
+                context.restore();
+            }
+        }
+    
+        var drawAttractors = function() {
+            for (var i=0; i<N_ATTRACTORS; i++) {
+                if (sign(attractors[i].s)<0)
+                    context.fillStyle = "#ff0000";
+                else 
+                    context.fillStyle = "#00ff00";
+                size = Math.round(attractors[i].s);
+                context.fillRect(attractors[i].x-size/2, attractors[i].y-size/2, size, size);
+            }
+        };
+    
+		var draw = function() {
+
+
+            context.fillStyle   = "rgba(0,0,0,0.018)"
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            updateParticles();
+            drawParticles();
+            drawAttractors();
+            
+        	frameCount = frameCount+1;
+        	requestAnimationFrame(draw);
+      	};
+
+
+        // init particles and attractors
+        init();
+        
+        // start loop
+      	draw();
+
+
+    </script>
+
+  </body>
+
+</html>      
