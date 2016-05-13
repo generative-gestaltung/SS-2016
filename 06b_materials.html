@@ -1,0 +1,108 @@
+<html>
+  <body>
+
+    <script src="threeJS/build/three.min.js"></script>
+    <script type="text/javascript" src="perlin.js"></script>
+        
+    <script>
+      
+      var scene;
+      var camera;
+      var renderer;
+      var N = 100;
+      var objects = [];
+
+      function init() {
+
+        // create scene
+        scene = new THREE.Scene();
+
+        // create camera with fov, aspect ratio, near and far plane
+        camera = new THREE.PerspectiveCamera (70, window.innerWidth/window.innerHeight, 0.1, 50000);
+
+        // default params
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize (window.innerWidth, window.innerHeight);
+        document.body.appendChild (renderer.domElement);
+      
+
+        // create NxN box-meshes and add them to scene
+        var size = 40;
+        var space = 40;
+
+        // use the same geometry for all meshes
+        var geometry = new THREE.BoxGeometry(size, size, size);
+
+        for (var i=0; i<N; i++) {
+          for (var j=0; j<N; j++) {
+
+            // create mesh from geometry and material
+            //var object = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial( { color: 0xdddddd, shading: THREE.FlatShading }));
+
+            var object = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial( { color: 0x99ff99, specular: 0xff0000, shininess: 30, shading: THREE.FlatShading}));
+
+            // properties for each mesh
+            object.position.x = i*space - N/2*space; 
+            object.position.y = 0;
+            object.position.z = j*space - N/2*space;
+
+            object.scale.x = 1;
+            object.scale.y = 1;
+            object.scale.z = 1;
+            
+            object.rotation.x = 0;
+            object.rotation.y = 0;
+            object.rotation.z = 0;
+
+            // store in array for late access
+            objects.push(object);
+            // add to scene
+            scene.add(object);
+          }
+        }
+
+        var directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        directionalLight.position.x = 0.8;
+        directionalLight.position.y = 0.3;
+        directionalLight.position.z = 1.0;
+        directionalLight.position.normalize();
+        scene.add(directionalLight);
+
+
+      }
+
+      // basic render loop
+      var render = function () {
+        var time = performance.now();
+
+        // move objects
+        for (var i=0; i<N; i++) {
+          for (var j=0; j<N; j++) {
+            var h = noise.simplex3(i*0.02,j*0.02,time*0.0001)*12+12;
+            h += noise.simplex3(i*0.1, j*0.1, time*0.0003)*3+3;
+            objects[j*N+i].scale.y = h;
+
+          }
+        }
+
+        var R = 1000;
+        phase = time*0.0001;
+
+        // move camera
+        camera.position.x = Math.sin(phase)*R;
+        camera.position.y = 500;
+        camera.position.z = Math.cos(phase)*R;
+        camera.lookAt (new THREE.Vector3 (0,0,0));
+        
+        requestAnimationFrame (render);
+        renderer.render (scene, camera);
+      };
+
+      init();
+      render();
+      
+      
+      
+    </script>
+  </body>
+</html>

@@ -1,0 +1,343 @@
+<html>
+  <body>
+
+    <script src="threeJS/build/three.min.js"></script>
+    <script type="text/javascript" src="perlin.js"></script>
+
+      <script id="vertexShader" type="x-shader/x-vertex">
+            
+        #define PI 3.14159
+ 
+        precision mediump float;
+        precision mediump int;
+        
+        
+        // comes with framework
+        uniform mat4 modelViewMatrix; // optional
+        uniform mat4 projectionMatrix; // optional
+        
+        
+        // user defined uniforms, values are passed in runtime
+        uniform float time;
+        
+        // user defined attributes
+        attribute vec3 position;
+        attribute vec4 color;
+        attribute vec3 normal;
+        
+        
+        // data to be passed to fragment shader
+        varying vec3 vPosition;
+        varying vec4 vColor;
+        
+        void main() {
+          
+          vec3 posTmp = position;
+          
+          // control height dynamically with time value
+          posTmp.y *= (time*0.001);
+  
+          // calcuate pixel position on screen and pass to fragment shader
+          gl_Position = projectionMatrix * modelViewMatrix * vec4 (posTmp, 1.0);
+
+          // pass world coords position to fragment shader
+          vPosition = position;
+
+          // pass color to fragment shader
+          vColor = color;
+        }
+
+        </script>
+        
+        <script id="fragmentShader" type="x-shader/x-fragment">
+            
+          precision mediump float;
+          precision mediump int;
+          
+          // input from vertex shader
+          varying vec3 vPosition;
+          varying vec4 vColor;
+          
+          void main() {
+              float b = vPosition.y / 200.0;
+
+              if (b>(1.7+sin(vPosition.x*0.1)*0.2))
+                gl_FragColor = vec4(1.0);
+              else if (b>1.0)
+                gl_FragColor = vec4(0.4, 0.3, 0.3, 1.0);
+              else 
+                gl_FragColor = vColor;
+              if (b<0.3)
+                gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
+          }
+        </script>
+        
+    <script>
+      
+      
+      // global variables
+      var cnt = 0;
+      var N = 1000;
+      var frameCnt = 0;
+      
+      // parameters for surface height calculation
+      var fx0 = 0.003;
+      var fz0 = 0.003;
+      var A0 = 200;
+
+      var fx1 = 0.05;
+      var fz1 = 0.05;
+      var A1 = 30;
+
+
+
+      var fx2 = 0.0002;
+      var fz2 = 0.0002;
+      var A2 = 1500;
+
+      var fx3 = 0.006;
+      var fz3 = 0.006;
+
+
+
+      var scene;
+      var camera;
+      var mesh;
+      var renderer;
+
+
+      var positions = new Float32Array (N*N*18);
+      var colors    = new Float32Array (N*N*18);
+      var normal    = new Float32Array (N*N*18);
+      
+
+      // get height for each vertex
+      function calcHeight(x, z) {
+
+        c1 = 1;
+        if ((Math.abs(x)%100)<50) c1 = 0;
+
+        h = noise.simplex3(x*fx0,z*fz0,0)*A0;
+
+        h += noise.simplex3(x*fx1, z*fz1, 10)*A1*c1;
+
+        if (h<50) h = 50;
+        
+        env = noise.simplex3(x*fx2, z*fz2, 50);
+        if (env<0.4) env = 0;
+        else env -= 0.4;
+
+        h += env * noise.simplex3(x*fx3, z*fz3, 0)*A2;
+
+        return h;
+      }
+    
+      function getColor (x,z) {
+
+        var r0 = noise.simplex3(x*0.08, z*0.08, 0);
+        var g0 = noise.simplex3(x*0.003, z*0.003, 0);
+        return {r: r0*0.2+0.2,
+                g: g0*0.8+0.2,
+                b: r0*0.2+0.2};
+      }
+
+
+      var addQuad = function (positions, x, z, w) {
+
+        var h = calcHeight(x,z);
+        // 0, 0
+        positions [cnt*6*3+0] = x;
+        positions [cnt*6*3+1] = h;
+        positions [cnt*6*3+2] = z;
+
+
+        colors[cnt*18] = getColor(x,z).r;
+        colors[cnt*18+1] = getColor(x,z).g;
+        colors[cnt*18+2] = getColor(x,z).b;
+
+
+               
+        // w, 0     
+        x0 = x+w;
+        z0 = z;
+        h = calcHeight(x0,z0);
+        positions [cnt*6*3+3] = x0;
+        positions [cnt*6*3+4] = h;
+        positions [cnt*6*3+5] = z0;
+
+
+        colors[cnt*18+3] = getColor(x0,z0).r;
+        colors[cnt*18+4] = getColor(x0,z0).g;
+        colors[cnt*18+5] = getColor(x0,z0).b;   
+                    
+
+
+        // w, w
+        z0 = z+w;
+        h = calcHeight(x0,z0);
+        positions [cnt*6*3+6] = x0;
+        positions [cnt*6*3+7] = h;
+        positions [cnt*6*3+8] = z0;
+        
+
+        colors[cnt*18+6] = getColor(x0,z0).r;
+        colors[cnt*18+7] = getColor(x0,z0).g;
+        colors[cnt*18+8] = getColor(x0,z0).b;
+
+
+
+        //
+        x0 = x;
+        z0 = z;
+        h = calcHeight(x0,z0);
+        positions [cnt*6*3+9] = x0;
+        positions [cnt*6*3+10] = h;
+        positions [cnt*6*3+11] = z0;
+        
+        colors[cnt*18+9] = getColor(x0,z0).r;
+        colors[cnt*18+10] = getColor(x0,z0).g;
+        colors[cnt*18+11] = getColor(x0,z0).b;
+
+
+
+        // w, 0     
+        z0 = z+w;
+        h = calcHeight(x0,z0);
+        positions [cnt*6*3+12] = x0;
+        positions [cnt*6*3+13] = h;
+        positions [cnt*6*3+14] = z0;
+
+        colors[cnt*18+12] = getColor(x0,z0).r;
+        colors[cnt*18+13] = getColor(x0,z0).g;
+        colors[cnt*18+14] = getColor(x0,z0).b;
+
+
+                    
+        // w, w
+        x0 = x+w;
+        h = calcHeight(x0,z0);
+        positions [cnt*6*3+15] = x0;
+        positions [cnt*6*3+16] = h;
+        positions [cnt*6*3+17] = z0;
+
+        colors[cnt*18+15] = getColor(x0,z0).r;
+        colors[cnt*18+16] = getColor(x0,z0).g;
+        colors[cnt*18+17] = getColor(x0,z0).b;
+
+        cnt += 1;
+      }
+
+
+      var clear = function() {
+
+      }
+
+
+      var createElements = function (x, y, z, id) {
+                
+        var material = new THREE.MeshBasicMaterial({color: 0xa00aff});
+        var shader = new THREE.RawShaderMaterial ({
+                            uniforms: {
+                              time: { type: "f", value: 1.0 }
+                            },
+                            vertexShader: document.getElementById ('vertexShader').textContent,
+                            fragmentShader: document.getElementById ('fragmentShader').textContent,
+                            side: THREE.DoubleSide,
+                            transparent: true
+                        });
+                        
+                        
+                        
+        // create geometry: a grid made of quads, with calculated height
+        
+        // empty geometry
+        var geometry = new THREE.BufferGeometry();
+        
+
+        var quadSize = 4;
+        // fill with NxN quads
+        for (var i=0; i<N; i++) {
+            for (var j=0; j<N; j++) {
+                x = (i-N/2)*quadSize;
+                z = (j-N/2)*quadSize;
+                addQuad (positions, x, z, quadSize);
+            }
+        }
+        
+        geometry.addAttribute ("position", new THREE.BufferAttribute (positions, 3));
+        geometry.addAttribute ("color",    new THREE.BufferAttribute (colors, 3));
+        geometry.addAttribute ("normal",   new THREE.BufferAttribute (normal, 3));
+                
+        //var material = new THREE.MeshBasicMaterial({ vertexColors: THREE.VertexColors });
+        
+        
+        var material = new THREE.RawShaderMaterial( {
+          uniforms: {
+            time: { type: "f", value: 1.0 }
+          },
+
+          vertexShader: document.getElementById ('vertexShader').textContent,
+          fragmentShader: document.getElementById ('fragmentShader').textContent,
+          side: THREE.DoubleSide,
+          transparent: true
+        });
+                                                           
+        var mesh = new THREE.Mesh (geometry, material);
+        return mesh;
+      }
+
+
+    function init() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera (70, window.innerWidth/window.innerHeight, 0.1, 50000);
+
+      // default params
+      renderer = new THREE.WebGLRenderer();
+      renderer.setSize (window.innerWidth, window.innerHeight);
+      document.body.appendChild (renderer.domElement);
+      
+      
+      // create one mesh and add to scene
+      mesh = createElements();
+      scene.add(mesh);
+    }
+
+
+
+      // basic render loop
+      var render = function () {
+        var time = 400; //performance.now()*0.1;
+        
+        var R = 400;
+        
+        // move camera in circle and adapt height to terrain
+        camera.position.x = Math.sin(frameCnt*0.003)*R;
+        camera.position.z = Math.cos(frameCnt*0.003)*R;
+        
+        // get surface heigth for x-z position
+        camera.position.y = 200; //time*calcHeight(camera.position.x, camera.position.z)*0.001+50;
+        
+        
+        camera.lookAt (new THREE.Vector3 (0,0,0));
+        //camera.up = new THREE.Vector3 (0,0,1);
+        
+        frameCnt += 1;
+        
+        mesh.material.uniforms.time.value = time;
+
+        requestAnimationFrame (render);
+        renderer.render (scene, camera);
+      };
+
+
+
+
+      // start
+      init();
+      render();
+      
+      
+      
+    </script>
+  </body>
+</html>

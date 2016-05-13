@@ -1,0 +1,100 @@
+<html>
+  <body>
+
+    <script src="threeJS/build/three.min.js"></script>
+    <script type="text/javascript" src="perlin.js"></script>
+        
+    <script>
+      
+      var scene;
+      var camera;
+      var renderer;
+      var N = 60;
+      var objects = [];
+
+      function init() {
+
+        // create scene
+        scene = new THREE.Scene();
+
+        // create camera with fov, aspect ratio, near and far plane
+        camera = new THREE.PerspectiveCamera (70, window.innerWidth/window.innerHeight, 0.1, 50000);
+
+        // default params
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize (window.innerWidth, window.innerHeight);
+        document.body.appendChild (renderer.domElement);
+      
+
+        // create NxN box-meshes and add them to scene
+        var size = 20;
+        var space = 24;
+
+        // use the same geometry for all meshes
+        var geometry = new THREE.BoxGeometry(size, size, size*5);
+
+        for (var i=0; i<N; i++) {
+          for (var j=0; j<N; j++) {
+
+            // create mesh from geometry and material
+            var object = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color: Math.random() * 0xffffff,
+                                                                               opacity: 0.1}));
+            // properties for each mesh
+            object.position.x = i*space - N/2*space;
+            object.position.y = j*space - N/2*space; 
+            object.position.z = 0;
+
+            object.scale.x = 1;
+            object.scale.y = 1;
+            object.scale.z = 1;
+            
+            object.rotation.x = 0;
+            object.rotation.y = 0;
+            object.rotation.z = 0;
+
+            // store in array for late access
+            objects.push(object);
+            // add to scene
+            scene.add(object);
+          }
+        }
+      }
+
+      // basic render loop
+      var render = function () {
+        var time = performance.now();
+
+        // move objects
+        for (var i=0; i<N; i++) {
+          for (var j=0; j<N; j++) {
+
+            var p = Math.pow(i-N/2, 2) + Math.pow(j-N/2, 2);
+            p *= 0.01;
+            objects[j*N+i].position.z = Math.sin(time*0.001+p)*50;
+
+            objects[j*N+i].scale.x = Math.sin(time*0.002)*0.5+0.5;
+            objects[j*N+i].scale.y = Math.sin(time*0.003)*0.5+0.5;
+          }
+        }
+
+        var R = 1000;
+        phase = time*0.0001;
+
+        // move camera
+        camera.position.x = Math.sin(phase)*R;
+        camera.position.y = 0;
+        camera.position.z = Math.cos(phase)*R;
+        camera.lookAt (new THREE.Vector3 (0,0,0));
+        
+        requestAnimationFrame (render);
+        renderer.render (scene, camera);
+      };
+
+      init();
+      render();
+      
+      
+      
+    </script>
+  </body>
+</html>
