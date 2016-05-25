@@ -33,7 +33,6 @@
         renderer.setSize (window.innerWidth, window.innerHeight);
         document.body.appendChild (renderer.domElement);
       
-
         // create NxN box-meshes and add them to scene
         var size = 38;
         var space = 40;
@@ -57,6 +56,7 @@
             new THREE.Face3(i*4, i*4+1, i*4+2),
             new THREE.Face3(i*4+2,i*4+1,i*4+3)
           );
+          
         }
         //material = new THREE.MeshBasicMaterial( { color: 0xffffff} );
         material = new THREE.MeshPhongMaterial({color: 0x99ff99, specular: 0xff0000, shininess: 30, shading: THREE.FlatShading});
@@ -99,7 +99,7 @@
             new THREE.Face3(3,1,4)
           );
 
-          var mat = new THREE.MeshPhongMaterial({color: 0x008800, specular: 0x008800, shininess: 30, shading: THREE.FlatShading});
+          var mat = new THREE.MeshPhongMaterial({color: 0xffffff*Math.random(), specular: 0x008800, shininess: 30, shading: THREE.FlatShading});
           var object = new THREE.Mesh(geometry, mat);
           object.position.x = x;
           object.position.z = z;
@@ -112,13 +112,11 @@
           object.scale.y = Math.random()*3+3;
           object.scale.z = 2;
 
-
           objects.push(object);
           treePos.push([new THREE.Vector3(object.position.x, object.position.y, object.position.z), 
                        new THREE.Vector3(0,30,0)]);
           scene.add(object);
         }
-
 
         var directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
         directionalLight.position.x = 0.8;
@@ -137,18 +135,19 @@
 
           t = Math.sin(time*0.001+i*0.001);
           t = Util.constrain(t, 0, 1);
+          t = 0;
           objects[i].position.x = Util.blend(treePos[i][0].x, treePos[i][1].x, t);
           objects[i].position.y = Util.blend(treePos[i][0].y, treePos[i][1].y, t);
           objects[i].position.z = Util.blend(treePos[i][0].z, treePos[i][1].z, t);
         }
 
-        var R = 100*Math.sin(time*0.001);
-        phase = time*0.001;
+        var R = 100; //*Math.sin(time*0.001);
+        phase = time*0.0004;
 
         // move camera
         camera.position.x = Math.sin(phase)*R;
         camera.position.z = Math.cos(phase)*R;
-        camera.position.y = getHeight(camera.position.x, camera.position.z);
+        camera.position.y = 50; //getHeight(camera.position.x, camera.position.z);
         camera.lookAt (new THREE.Vector3 (0,0,0));
         
         requestAnimationFrame (render);

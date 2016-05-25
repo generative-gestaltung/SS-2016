@@ -1,6 +1,11 @@
 var Util = {};
 
 
+Util.sign = function(v) {
+  if (v<0) return -1;
+  else return 1;
+}
+
 /*
 * calculate length of 2d vector
 */
@@ -8,6 +13,9 @@ Util.len = function (v) {
   return Math.sqrt (v.x*v.x + v.y*v.y);
 }
 
+Util.len3 = function (v) {
+  return Math.sqrt (v.x*v.x + v.y*v.y + v.z*v.z); 
+}
 /*
 * distance between two points
 */
@@ -55,7 +63,7 @@ Util.randI = function (min, max) {
 /*
 * quantize input value 0..1 in n steps
 */
-var quantize = function (x, n) {
+Util.quantize = function (x, n) {
   if (n==0) return 0;
   return Math.floor(x*n)/n;
 }
@@ -73,3 +81,20 @@ Util.calcAttraction = function (pos0, pos1, m) {
   	return force;
 }
 
+/*
+* force of 3d attractor
+*/
+Util.calcAttraction3 = function (pos0, pos1, m) {
+  var force = {x: (pos0.x - pos1.x), 
+               y: (pos0.y - pos1.y),
+               z: (pos0.z - pos1.z)};
+
+  var dist = Util.len3(force);
+  if (dist==0) dist = 0.01;
+
+  force.x = -force.x / (Math.pow(dist,2)) * m;
+  force.y = -force.y / (Math.pow(dist,2)) * m;
+  force.z = -force.z / (Math.pow(dist,2)) * m;
+
+  return force;
+}

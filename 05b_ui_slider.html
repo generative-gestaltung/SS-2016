@@ -1,16 +1,59 @@
+<!DOCTYPE HTML>
 <html>
+
   <body>
 
     <script src="threeJS/build/three.min.js"></script>
-    <script type="text/javascript" src="perlin.js"></script>
-        
     <script>
-      
+
       var scene;
       var camera;
       var renderer;
-      var N = 60;
+      var N = 20;
       var objects = [];
+      var camSpeed = 0.01;
+      var cameraRunning = true;
+
+
+      function changeBoxSize(value) {
+        for (var i=0; i<N; i++) {
+          for (var j=0; j<N; j++) {
+            objects[j*N+i].scale.x = value;
+            objects[j*N+i].scale.y = value;
+          }
+        }
+        document.getElementById("sliderBoxSizeText").innerHTML = value;
+      }
+    
+    
+
+      function onSliderB(value) {
+        for (var i=0; i<N; i++) {
+          for (var j=0; j<N; j++) {
+            objects[j*N+i].position.z = Math.sin(i*0.15)*value;
+          }
+        }
+      }
+    
+    function stopCamera() {
+        
+        var button = document.getElementById("buttonToggleCamera");
+        if (cameraRunning) {
+            button.innerHTML = "start camera";
+            camSpeed = 0;
+            cameraRunning = false;
+        }
+        
+        else {
+            button.innerHTML = "stop camera";
+            camSpeed = 0.001;
+            cameraRunning = true;
+        }
+    }
+    
+    function startCamera() {
+        camSpeed = 0.0001;
+    }
 
       function init() {
 
@@ -24,11 +67,10 @@
         renderer = new THREE.WebGLRenderer();
         renderer.setSize (window.innerWidth, window.innerHeight);
         document.body.appendChild (renderer.domElement);
-      
 
         // create NxN box-meshes and add them to scene
         var size = 20;
-        var space = 24;
+        var space = 60;
 
         // use the same geometry for all meshes
         var geometry = new THREE.BoxGeometry(size, size, size*5);
@@ -66,28 +108,17 @@
 
       // basic render loop
       var render = function () {
+          
         var time = performance.now();
 
-        // move objects
-        for (var i=0; i<N; i++) {
-          for (var j=0; j<N; j++) {
-
-            var p = Math.pow(i-N/2, 2) + Math.pow(j-N/2, 2);
-            p *= 0.01;
-            objects[j*N+i].position.z = Math.sin(time*0.001+p)*50;
-
-            objects[j*N+i].scale.x = Math.sin(time*0.002)*0.5+0.5;
-            objects[j*N+i].scale.y = Math.sin(time*0.003)*0.5+0.5;
-          }
-        }
-
         var R = 1000;
-        phase = time*0.0001;
+        phase = time*camSpeed
 
         // move camera
         camera.position.x = Math.sin(phase)*R;
         camera.position.y = 0;
         camera.position.z = Math.cos(phase)*R;
+        
         camera.lookAt (new THREE.Vector3 (0,0,0));
         
         requestAnimationFrame (render);
@@ -98,5 +129,20 @@
       render();
       
     </script>
+    
+
+    <button onclick="stopCamera();" id="buttonToggleCamera">stop camera</button>
+    <button onclick="startCamera();">start camera</button>
+    
+    <form>
+      box size
+      <input type="range" onchange="changeBoxSize(this.value);" id="sliderBoxSize" value="1" min="0" max="10" step="0.1">
+          <div id="sliderBoxSizeText">1</div>
+      <br>
+      B
+      <input type="range" onchange="onSliderB(this.value);" id="B" value="0" min="0" max="500" step="1">
+    </form>
+
   </body>
-</html>
+
+</html>      

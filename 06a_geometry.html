@@ -1,0 +1,160 @@
+<html>
+  <body>
+
+    <script src="threeJS/build/three.min.js"></script>
+        
+    <script>
+      
+      var scene;
+      var camera;
+      var renderer;
+      var objects = [];
+      var N = 2;
+
+      function init() {
+
+        // create scene
+        scene = new THREE.Scene();
+
+        // create camera with fov, aspect ratio, near and far plane
+        camera = new THREE.PerspectiveCamera (70, window.innerWidth/window.innerHeight, 0.1, 50000);
+
+        // default params
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize (window.innerWidth, window.innerHeight);
+        document.body.appendChild (renderer.domElement);
+      
+
+        // create NxN box-meshes and add them to scene
+        var size = 30;
+        var space = 500;
+
+        // create empty geometry
+        var geometry0 = new THREE.Geometry();
+        //geometry0 = new THREE.BoxGeometry(50,50,50);
+
+        // add points for cylinder
+        var n = 40;
+        var R = 340;
+        var h = 340;
+
+        // add n "triangles" to describe cylinder
+        for (var i=0; i<n; i++) {
+          var phi = i*Math.PI*2/n;
+          var rand = 0; //Math.random()*40;
+
+          geometry0.vertices.push(new THREE.Vector3(R*Math.sin(phi),
+                                                    0, 
+                                                    R*Math.cos(phi)));
+
+          geometry0.vertices.push(new THREE.Vector3(0.2*R*Math.sin(phi),
+                                                    h, 
+                                                    0.2*R*Math.cos(phi)));
+
+          phi = (i+1)*Math.PI*2/n;
+          geometry0.vertices.push(new THREE.Vector3(R*Math.sin(phi),
+                                                    0, 
+                                                    R*Math.cos(phi)));
+
+
+        }
+
+        for (var i=0; i<n; i++) {
+          geometry0.faces.push(new THREE.Face3(i*3,i*3+1,i*3+2));
+        }
+
+
+
+
+        var material = new THREE.MeshBasicMaterial({color: 0xffffff,
+                                                    opacity: 0.5,
+                                                    wireframe: true});
+
+        //material = new THREE.MeshLambertMaterial({});
+        
+
+        material = new THREE.MeshPhongMaterial({
+          color: 0x99ff99, 
+          specular: 0xff0000, 
+          shininess: 30, 
+          shading: THREE.FlatShading,
+          side: THREE.DoubleSide});
+
+
+        for (var i=0; i<N; i++) {
+
+          objects[i] = [];
+          for (var j=0; j<N; j++) {
+
+            // create mesh from geometry and material
+            var object;
+            object = new THREE.Mesh(geometry0, material);
+            
+            // properties for each mesh
+            object.position.x = i*space - N/2*space;
+            object.position.y = j*space - N/2*space; 
+            object.position.z = 0;
+
+            object.scale.x = 1;
+            object.scale.y = 1;
+            object.scale.z = 1;
+            
+            object.rotation.x = 0;
+            object.rotation.y = 0;
+            object.rotation.z = 0;
+
+            // store object for later use
+            objects[i][j] = object;
+
+            // add to scene
+            scene.add(object);
+          }
+        }
+
+        renderer.setClearColor(0xffffff,1.0);
+
+        // add light to scene to work with lambert material
+        var directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(-0.8, 0, 1);
+        scene.add(directionalLight);
+
+        directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(0.8, 0, 1);
+        scene.add(directionalLight);
+
+
+        scene.add(new THREE.AmbientLight(0x880000, 0.05));
+
+      }
+
+      // basic render loop
+      var render = function () {
+        var time = performance.now();
+        var R = 1000;
+        phase = time*0.0001;
+
+        // move camera
+        camera.position.x = Math.sin(phase)*R;
+        camera.position.y = 0;
+        camera.position.z = Math.cos(phase)*R;
+        camera.lookAt (new THREE.Vector3 (0,0,0));
+        
+
+        for (var i=0; i<N; i++) {
+          for (var j=0; j<N; j++) {
+            //objects[i][j].position.z = Math.sin(time*0.001+i*0.4)*100+100;
+          }
+        }
+
+        requestAnimationFrame (render);
+        renderer.render (scene, camera);
+      };
+
+      init();
+      render();
+      
+      
+      
+    </script>
+  </body>
+</html>
