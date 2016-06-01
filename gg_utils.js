@@ -65,7 +65,7 @@ Util.randI = function (min, max) {
 */
 Util.quantize = function (x, n) {
   if (n==0) return 0;
-  return Math.floor(x*n)/n;
+  return Math.round(x*n)/n;
 }
 
 
