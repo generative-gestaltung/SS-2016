@@ -1,20 +1,165 @@
+
 <!DOCTYPE html> 
 <html xmlns="http://www.w3.org/1999/xhtml"> 
   <head> 
-  	<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
- </head> 
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /> 
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <title>Acceleration + Gyro Demo</title> 
+    <meta name="apple-touch-fullscreen" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <style> 
+      #no {
+        display: none;  
+      }
+
+      body {
+        font-family:Helvetica, Arial, Verdana, sans-serif;
+      }   
+    </style> 
+  </head> 
 
   <body>
-    hello
-	<div id="info">xxx</div>
+    <div id="yes"> 
+
+      <h1>Accelerometer</h1>
+      
+      <div id="xlabel"></div>
+      <div id="ylabel"></div>
+      <div id="zlabel"></div>
+      <div id="ilabel"></div>         
+      <div id="arAlphaLabel"></div>                   
+      <div id="arBetaLabel"></div>                    
+      <div id="arGammaLabel"></div>  
+
+      <h1>Gyro</h1>
+      <div id="alphalabel"></div>     
+      <div id="betalabel"></div>
+      <div id="gammalabel"></div>                                     
+    </div>
+    <div id="no">
+      Your browser does not support Device Orientation and Motion API. Try this sample with iPhone, iPod or iPad with iOS 4.2+.    
+    </div>
+    
     <script> 
-      window.onload = function() {
-        var socket = io(window.location.origin); 
+      var delay = 1;
+      var socket;
+
+      // Acceleration
+      var data = {
+        ax:0,
+        ay:0,
+        az:0,
+        ai:0,
+        arAlpha:0,
+        arBeta:0,
+        arGamma:0,
+        alpha:0,
+        beta:0,
+        gamma:0,
+        velx:0, 
+        vely:0,
+        velz:0,
+        accx:0,
+        accy:0,
+        accz:0,
+        posx:0, 
+        posy:0,
+        posz:0,
+        posx2:0, 
+        posy2:0,
+        posz2:0
+      }
+      
+      var gx = 0;
+      var gy = 0;
+      var gz = 0;
+      
+      if (window.DeviceMotionEvent==undefined) {
+        document.getElementById("no").style.display="block";
+        document.getElementById("yes").style.display="none";
+      } 
+      else {
+        window.ondevicemotion = function(event) {
+          data.ax = event.accelerationIncludingGravity.x;
+          data.ay = event.accelerationIncludingGravity.y;
+          data.az = event.accelerationIncludingGravity.z;    
+          data.ai = Math.round(event.interval * 100) / 100;
+
+
+          data.rR = event.rotationRate;
+          if (data.rR != null) {
+            data.arAlpha = data.rR.alpha;
+            data.arBeta  = data.rR.beta;
+            data.arGamma = data.rR.gamma;
+          }
+/*
+          data.velx += data.arAlpha;
+          data.vely += data.arBeta;
+          data.velz += data.arGamma;
+*/
+          var damp = 0.9;
+          var alpha = 0.9;
+          gx = alpha*gx + (1-alpha)*event.acceleration.x;
+          gy = alpha*gy + (1-alpha)*event.acceleration.y;
+          gz = alpha*gz + (1-alpha)*event.acceleration.z;
+
+          data.accx = event.acceleration.x - gx;
+          data.accy = event.acceleration.y - gy;
+          data.accz = event.acceleration.z - gz;
+
+          data.velx += data.accx;
+          data.vely += data.accy;
+          data.velz += data.accz;
+
+          data.posx += data.velx;
+          data.posy += data.vely;
+          data.posz += data.velz;
+
+          data.posx2 += data.posx;
+          data.posy2 += data.posy;
+          data.posz2 += data.posz;
+
+          if (socket) {
+            socket.emit("update", data);
+          }
+        }
+                
+        var filt0 = 0.04;
+        var filt1 = 1-filt0;
+        window.ondeviceorientation = function(event) {
+          data.alpha = data.alpha*filt1 + filt0*Math.round(event.alpha);
+          data.beta  = data.beta*filt1 + filt0*Math.round(event.beta);
+          data.gamma = data.gamma*filt1 + filt0*Math.round(event.gamma);
+
+          if (socket) {
+            socket.emit("update", data);
+          }
+        }       
         
-		socket.on('info', function (data) {
-          document.getElementById('info').innerHTML = data;
-        });
+
+        setInterval(function() {
+          document.getElementById("xlabel").innerHTML = "X: " + data.ax;
+          document.getElementById("ylabel").innerHTML = "Y: " + data.ay;
+          document.getElementById("zlabel").innerHTML = "Z: " + data.az;
+          document.getElementById("ilabel").innerHTML = "I: " + data.ai;
+          document.getElementById("arAlphaLabel").innerHTML = "arA: " + data.arAlpha;                              
+          document.getElementById("arBetaLabel").innerHTML = "arB: " + data.arBeta;
+          document.getElementById("arGammaLabel").innerHTML = "arG: " + data.arGamma;                                                  
+          document.getElementById("alphalabel").innerHTML = "Alpha: " + data.alpha;
+          document.getElementById("betalabel").innerHTML = "Beta: " + data.beta;
+          document.getElementById("gammalabel").innerHTML = "Gamma: " + data.gamma;
+
+        }, delay);
+      } 
+
+      window.onload = function(){
+        socket = io(window.location.origin); 
+        socket.emit("register_live", {});
+
+        console.log(socket);
       }
       </script> 
-  </body> 
+    </body> 
 </html> 

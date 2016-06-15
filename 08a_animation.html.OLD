@@ -1,0 +1,141 @@
+<!DOCTYPE HTML>
+<html>
+
+  <head>
+    <script type="text/javascript" src="gg_utils.js"></script>
+    <script>
+        
+
+    var createAnimation = function () {
+      return {
+        len : 0,
+        loop : true,
+        keyframes : []
+      }
+    }
+
+    var addKeyFrame = function (anim, theTime, theValues) {
+        var keyFrame = {
+            time: theTime,
+            values: theValues
+        };
+        anim.keyframes.push(keyFrame);
+        anim.len += 1;
+    }
+    
+    var playAnim = function (anim, time) {
+      
+      // calculate total duration of animation
+      var totalTime = anim.keyframes[anim.keyframes.length-1].time;
+      
+      if (anim.loop)
+        time = time % totalTime;
+      
+      var i;
+      for (i=0; i<anim.len-1; i++) {
+        if (time < anim.keyframes[i].time)
+          break; 
+      }
+
+      var dim = anim.keyframes[0].values.length;
+      var ret = [];
+      
+      t0 = anim.keyframes[i-1].time;
+      t1 = anim.keyframes[i].time;
+      t = (time - t0) / (t1-t0);
+
+      for (var j=0; j<dim; j++) {
+        v0 = anim.keyframes[i-1].values[j];
+        v1 = anim.keyframes[i].values[j];
+        ret[j] = Util.blend(v0,v1,t);
+      }
+      return ret;
+    }
+
+    // VARIABLES
+    var canvas;
+    var context;
+    var animColor;
+    var animPos;
+    
+
+    var init = function() {
+
+      canvas = document.getElementById("myCanvas");
+      context = canvas.getContext('2d');
+      
+      // init animations
+      animRGB = createAnimation();
+      animXY = createAnimation();
+      
+      // add keyframes to animations
+      var timeTmp = 0;
+      for (j=0; j<5; j++) {
+          addKeyFrame (animRGB, j, [Math.round(Math.random()*255),
+                                          Math.round(Math.random()*255),
+                                          Math.round(Math.random()*255)]);
+                                          
+                                          
+      }
+      
+      var phi = 0;
+      for (j=0; j<150; j++) {
+        
+        var A = 100;
+        var f = 0.1;
+        addKeyFrame (animXY, timeTmp, [Math.sin(phi*Math.PI*2*f)*A + A,
+                                       Math.cos(phi*Math.PI*2*f)*A + A]);
+        
+        
+        // random duration till next frame
+        phi += Math.sin(timeTmp)*0.2+0.2;
+        timeTmp += 0.1;
+      }
+    }
+
+    var fillRGB = function (r, g, b) {
+      r = Math.round(r);
+      g = Math.round(g);
+      b = Math.round(b);
+      context.fillStyle = "rgb("+r+", "+g+", "+b+")";
+    }
+
+    var draw = function() {
+        
+      context.clearRect (0, 0, canvas.width, canvas.height);
+
+      // get time in sec
+      var time = performance.now() / 1000.0;
+
+      var col = playAnim (animRGB, time);
+      var xy = playAnim(animXY, time);
+      
+      var x = xy[0];
+      var y = xy[1];
+    
+    A = 100;
+      f = 0.6;
+      x = Math.sin(time*Math.PI*2*f)*A + A;
+      y = Math.cos(time*Math.PI*2*f)*A + A;
+      
+      fillRGB (col[0], col[1], col[2]);
+      context.fillRect(x, y, 50, 50);
+      requestAnimationFrame(draw);
+    };
+
+    </script>
+  </head>
+
+  <body>
+
+
+    <canvas id="myCanvas" width="800" height="600"></canvas>
+
+    <script>
+      init();
+      draw();		
+    </script>
+
+  </body>
+
+</html>      

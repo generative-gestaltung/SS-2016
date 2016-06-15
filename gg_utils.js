@@ -25,6 +25,13 @@ Util.dist = function (v0, v1) {
 }
 
 /*
+ * map value v from range [xmin, xmax] to range [0,1]
+ */
+Util.map = function (v, xmin, xmax) {
+    return (v - xmin) / (xmax - xmin);
+}
+
+/*
 * linear interpolate between x0 and x1 t=0..1
 */
 Util.blend = function (x0, x1, t) {

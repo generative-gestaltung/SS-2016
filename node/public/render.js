@@ -121,6 +121,9 @@ var render = function () {
   var yo = -250;
   var sc = 1;
   if (_data) {
+
+		  //console.log(_data);
+/*
     keys = Object.keys(_data)
     nKeys = keys.length;
     bars[0].position.y = yo + _data[keys[0]].ax;
@@ -138,7 +141,7 @@ var render = function () {
     bars[9].position.y  = yo + _data[keys[0]].posx;
     bars[10].position.y = yo + _data[keys[0]].posy;
     bars[11].position.y = yo + _data[keys[0]].posz;
-     
+ */   
   }
 
 

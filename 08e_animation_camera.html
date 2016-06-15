@@ -1,0 +1,276 @@
+<html>
+  <body>
+
+    <script src="threeJS/build/three.min.js"></script>
+    <script type="text/javascript" src="perlin.js"></script>
+    <script type="text/javascript" src="gg_utils.js"></script>
+    <script type="text/javascript" src="FlyControls.js"></script>
+    
+        
+    <script>
+        
+        
+        
+        
+        
+        
+    
+    var createAnimation = function () {
+        return {
+            len : 0,
+            loop : true,
+            keyframes : []
+        }
+    }
+    
+    var addKeyFrame = function (anim, theTime, theValues) {
+        var keyFrame = {
+            time: theTime,
+            values: theValues
+        };
+        anim.keyframes.push(keyFrame);
+        anim.len += 1;
+    }
+    
+    var playAnim = function (anim, time) {
+        
+        // calculate total duration of animation
+        var totalTime = anim.keyframes[anim.keyframes.length-1].time;
+        
+        if (anim.loop)
+        time = time % totalTime;
+        
+        var i;
+        for (i=0; i<anim.len-1; i++) {
+            if (time < anim.keyframes[i].time)
+            break;
+        }
+        
+        var dim = anim.keyframes[0].values.length;
+        var ret = [];
+        
+        t0 = anim.keyframes[i-1].time;
+        t1 = anim.keyframes[i].time;
+        t = (time - t0) / (t1-t0);
+        
+        for (var j=0; j<dim; j++) {
+            v0 = anim.keyframes[i-1].values[j];
+            v1 = anim.keyframes[i].values[j];
+            ret[j] = Util.blend(v0,v1,t);
+        }
+        return ret;
+    }
+    
+    
+      
+      var scene;
+      var camera;
+      var renderer;
+      var N = 400;
+      var objects = [];
+      var treePos = [];
+      var controls;
+      
+      var cameraAnimation  = createAnimation();
+
+
+      function getHeight(x,y) {
+        return noise.simplex2(x*0.005, y*0.005)*25 + noise.simplex2(x*0.03, y*0.03)*3 + noise.simplex2(x*0.1, y*0.1)*0.4;
+      }
+
+    var keyCnt = 0;
+    var EDIT = 0;
+    var REPLAY = 1;
+    var mode = EDIT;
+    
+    
+    var keyCallback = function(evt) {
+        
+        console.log(evt);
+        // add keyframe for current camera position
+        if (evt.charCode==112) {
+            console.log("edit");
+            if (mode==REPLAY) return;
+            var pos  = camera.position;
+            var look = camera.getWorldDirection();
+            var v = [pos.x, pos.y, pos.z, look.x, look.y, look.z];
+            addKeyFrame(cameraAnimation, keyCnt*5, v);
+            console.log(cameraAnimation.keyframes[0]);
+            keyCnt += 1;
+        }
+        
+        // change mode
+        if (evt.charCode==109) {
+            console.log("mode");
+            if (mode==EDIT) {
+                mode = REPLAY;
+            }
+            else {
+                mode = EDIT;
+            }
+        }
+    }
+
+
+      function init() {
+
+        document.addEventListener("keypress", keyCallback);
+                              
+        // create scene
+        scene = new THREE.Scene();
+
+
+        // create camera with fov, aspect ratio, near and far plane
+        camera = new THREE.PerspectiveCamera (70, window.innerWidth/window.innerHeight, 0.1, 50000);
+        
+        
+        controls = new THREE.FlyControls( camera );
+        controls.movementSpeed = 100;
+        controls.rollSpeed = Math.PI / 12;
+        controls.autoForward = false;
+        controls.dragToLook = false;
+
+        // default params
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize (window.innerWidth, window.innerHeight);
+        document.body.appendChild (renderer.domElement);
+      
+        // create NxN box-meshes and add them to scene
+        var size = 38;
+        var space = 40;
+
+
+        geometry = new THREE.Geometry();
+
+        for (var i=0; i<N*N; i++) {
+
+          var x0 = (i%N);
+          var z0 = Math.floor(i/N);
+
+          geometry.vertices.push(
+            new THREE.Vector3(x0, getHeight(x0, z0), z0),
+            new THREE.Vector3(x0, getHeight(x0, z0+1), z0+1),
+            new THREE.Vector3(x0+1, getHeight(x0+1, z0), z0),
+            new THREE.Vector3(x0+1, getHeight(x0+1, z0+1), z0+1)
+          );
+
+          geometry.faces.push(
+            new THREE.Face3(i*4, i*4+1, i*4+2),
+            new THREE.Face3(i*4+2,i*4+1,i*4+3)
+          );
+          
+        }
+        //material = new THREE.MeshBasicMaterial( { color: 0xffffff} );
+        material = new THREE.MeshPhongMaterial({color: 0xffffff, specular: 0xffffff, shininess: 30, shading: THREE.FlatShading});
+        
+        
+        mesh = new THREE.Mesh(geometry, material);
+        
+        scale = 1;
+        mesh.position.x = -N/2*scale;
+        mesh.position.z = -N/2*scale;
+
+        mesh.scale.x = scale;
+        mesh.scale.y = scale;
+        mesh.scale.z = scale;
+
+        scene.add(mesh);
+
+
+        for (var i=0; i<N*N; i++) {
+          
+          var x = (i%N);
+          var z = Math.floor(i/N);
+
+
+          if (Math.random()>noise.simplex2(x*0.01, z*0.01)*0.1) continue;
+          var geometry = new THREE.Geometry();
+
+          geometry.vertices.push(
+            new THREE.Vector3(0,0,0),
+            new THREE.Vector3(1,0,0),
+            new THREE.Vector3(0,0,1),
+            new THREE.Vector3(1,0,1),
+            new THREE.Vector3(0.5,1,0.5)
+          );
+
+          geometry.faces.push(
+            new THREE.Face3(1,0,4),
+            new THREE.Face3(0,2,4),
+            new THREE.Face3(2,3,4),
+            new THREE.Face3(3,1,4)
+          );
+
+          var mat = new THREE.MeshPhongMaterial({color: 0xffffff*Math.random(), specular: 0x008800, shininess: 30, shading: THREE.FlatShading});
+          var object = new THREE.Mesh(geometry, mat);
+          object.position.x = x;
+          object.position.z = z;
+          object.position.y = getHeight(object.position.x, object.position.z);
+          object.position.x -= N/2;
+          object.position.z -= N/2;
+
+          object.rotation.y = Math.random()*Math.PI*2;
+          object.scale.x = 2;
+          object.scale.y = Math.random()*3+3;
+          object.scale.z = 2;
+
+          objects.push(object);
+          treePos.push([new THREE.Vector3(object.position.x, object.position.y, object.position.z), 
+                       new THREE.Vector3(0,30,0)]);
+          scene.add(object);
+        }
+
+        var directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        directionalLight.position.x = 0.8;
+        directionalLight.position.y = 0.3;
+        directionalLight.position.z = 1.0;
+        directionalLight.position.normalize();
+        
+        var ambientLight = new THREE.AmbientLight(0x888888);
+        scene.add(directionalLight);
+        scene.add(ambientLight);
+
+      }
+    
+    
+    var time = 0;
+
+      // basic render loop
+      var render = function () {
+        var newTime = performance.now() * 0.001;
+        var deltaTime = newTime - time;
+        time = newTime;
+        
+        controls.update(deltaTime);
+
+        for (var i=0; i<objects.length; i++) {
+
+          t = Math.sin(time*0.001+i*0.001);
+          t = Util.constrain(t, 0, 1);
+          t = 0;
+          objects[i].position.x = Util.blend(treePos[i][0].x, treePos[i][1].x, t);
+          objects[i].position.y = Util.blend(treePos[i][0].y, treePos[i][1].y, t);
+          objects[i].position.z = Util.blend(treePos[i][0].z, treePos[i][1].z, t);
+        }
+
+        // move camera by animation
+        if (mode==REPLAY) {
+            var data = playAnim (cameraAnimation, time);
+            console.log(data);
+            camera.position.set(data[0], data[1], data[2]);
+            camera.lookAt (new THREE.Vector3(data[3], data[4], data[5]));
+        }
+        
+        
+        requestAnimationFrame (render);
+        renderer.render (scene, camera);
+      };
+
+      init();
+      render();
+      
+      
+      
+    </script>
+  </body>
+</html>

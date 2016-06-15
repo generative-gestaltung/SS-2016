@@ -1,0 +1,128 @@
+<html>
+  <body>
+
+    <script src="threeJS/build/three.min.js"></script>
+    <script src="gg_utils.js"></script>
+    <script src="gg_animation.js"></script>
+        
+    <script>
+      
+      var scene;
+      var camera;
+      var renderer;
+      var objects = [];
+	  var N = 10;
+      var cameraAnimation = new Animation();
+
+
+
+
+
+      function initScene() {
+
+        // create NxN box-meshes and add them to scene
+        var size = 30;
+        var space = 60;
+
+        // use the same geometry for all meshes
+        var geometry0 = new THREE.OctahedronGeometry(size);  
+        var geometry1 = new THREE.BoxGeometry(size,size,size);  
+        var material = new THREE.MeshBasicMaterial({color: 0xffffff,
+                                                    opacity: 0.5});
+
+        for (var i=0; i<N; i++) {
+
+          objects[i] = [];
+          for (var j=0; j<N; j++) {
+
+            // create mesh from geometry and material
+            var object;
+            if (Math.random()<0.5)
+              object = new THREE.Mesh(geometry0, material);
+            else 
+              object = new THREE.Mesh(geometry1, material);
+            
+            // properties for each mesh
+            object.position.x = i*space - N/2*space;
+            object.position.y = j*space - N/2*space; 
+            object.position.z = 0;
+
+            object.scale.x = 1;
+            object.scale.y = 1;
+            object.scale.z = 1;
+            
+            object.rotation.x = 0;
+            object.rotation.y = 0;
+            object.rotation.z = 0;
+
+            // store object for later use
+            objects[i][j] = object;
+
+            // add to scene
+            scene.add(object);
+          }
+        }
+      }
+
+
+
+	  function initCameraAnimation() {
+
+         for (var i=0; i<100; i++) {
+			var vec = [
+				Math.random()*100,
+				Math.random()*100,
+				Math.random()*100];
+		 	cameraAnimation.addKeyFrame(i, vec);
+		 }
+	  }
+
+
+
+      function init() {
+
+        // create scene
+        scene = new THREE.Scene();
+
+        // create camera with fov, aspect ratio, near and far plane
+        camera = new THREE.PerspectiveCamera (70, window.innerWidth/window.innerHeight, 0.1, 50000);
+
+        // default params
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize (window.innerWidth, window.innerHeight);
+        document.body.appendChild (renderer.domElement);
+      
+
+
+	    initScene();
+		initCameraAnimation();
+
+      }
+
+      // basic render loop
+      var render = function () {
+          
+        // get time in sec
+        var time = performance.now()*0.001;
+
+		var pos = cameraAnimation.getValue(time);
+        // move camera
+        camera.position.x = pos[0];
+        camera.position.y = pos[1];
+        camera.position.z = pos[2];
+
+        camera.lookAt (new THREE.Vector3 (0,0,0));
+        
+
+        requestAnimationFrame (render);
+        renderer.render (scene, camera);
+      };
+
+      init();
+      render();
+      
+      
+      
+    </script>
+  </body>
+</html>

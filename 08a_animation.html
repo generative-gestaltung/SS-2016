@@ -4,6 +4,9 @@
   <head>
     <script type="text/javascript" src="gg_utils.js"></script>
     <script>
+        
+
+    var N = 1000;
 
     var createAnimation = function () {
       return {
@@ -21,6 +24,7 @@
         anim.keyframes.push(keyFrame);
         anim.len += 1;
     }
+    
     var playAnim = function (anim, time) {
       
       // calculate total duration of animation
@@ -53,7 +57,6 @@
     // VARIABLES
     var canvas;
     var context;
-    var frameCount;
     var animColor;
     var animPos;
     
@@ -62,29 +65,30 @@
 
       canvas = document.getElementById("myCanvas");
       context = canvas.getContext('2d');
-      frameCount = 0;
-
-
+      
       // init animations
-      animRGB = createAnimation();
-      animXY = createAnimation();
+      animSpiralParams = createAnimation();
+      animSpiralPositions = createAnimation();
       
       // add keyframes to animations
       var timeTmp = 0;
       
-      for (j=0; j<150; j++) {
-        
-        addKeyFrame (animRGB, timeTmp, [Math.round(Math.random()*255),
-                                        Math.round(Math.random()*255),
-                                        Math.round(Math.random()*255)]);
-        
-        var A = 100;
-        addKeyFrame (animXY, timeTmp, [Math.sin(timeTmp*Math.PI*2/2)*A + A,
-                                       Math.cos(timeTmp*Math.PI*2/2)*A + A]);
-        
-        
-        // random duration till next frame
-        timeTmp += 0.1;
+      for (j=0; j<50; j++) {
+          var Atmp = Math.random()*200+80;
+          var ftmp = Math.random()*0.015+0.001;
+          var phtmp = Math.random()*6;
+          addKeyFrame (animSpiralParams, timeTmp, [Atmp,
+                                                   ftmp,
+                                                   phtmp]);
+                                      
+                                      
+          var positionsTmp = [];
+          for (var i=0; i<N; i++) {
+              positionsTmp[i*2] = Math.sin(Math.PI*2*ftmp*i)*Atmp*i/1000;
+              positionsTmp[i*2+1] = Math.cos(Math.PI*2*ftmp*i+phtmp)*Atmp*i/1000
+          }
+          addKeyFrame (animSpiralPositions, timeTmp, positionsTmp);
+          timeTmp += 1.9;
       }
     }
 
@@ -96,16 +100,36 @@
     }
 
     var draw = function() {
+        
+      context.clearRect (0, 0, canvas.width, canvas.height);
 
+      // get time in sec
       var time = performance.now() / 1000.0;
-      context.clearRect (0, 0, canvas.width, canvas.height);  
 
-      var col = playAnim (animRGB, time);
-      var xy = playAnim(animXY, time);
+
+
+
+
+      // pet params from animation and calculate spiral position
+      A  = playAnim(animSpiralParams, time)[0];
+      f  = playAnim(animSpiralParams, time)[1];
+      ph = playAnim(animSpiralParams, time)[2];
+
+      fillRGB (0,0,0);
       
-      fillRGB (col[0], col[1], col[2]);
-      context.fillRect(xy[0], xy[1], 50, 50);
-      frameCount = frameCount+1;
+      
+      var positions = playAnim(animSpiralPositions, time);
+      
+      for (var i=0; i<N; i++) {
+          
+          var x = Math.sin(Math.PI*2*f*i)*A*i/1000;
+          var y = Math.cos(Math.PI*2*f*i+ph)*A*i/1000;
+          
+          //x = positions[i*2];
+          //y = positions[i*2+1];
+          
+          context.fillRect(x+250, y+250, 5, 5);
+      }
       requestAnimationFrame(draw);
     };
 
